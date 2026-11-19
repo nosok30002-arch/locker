@@ -20,9 +20,10 @@
             </intent-filter>
         </activity>
 
+        <!-- ТУТ ИЗМЕНЕНО: singleInstance на singleTop -->
         <activity android:name=".LockActivity"
             android:exported="false"
-            android:launchMode="singleInstance"
+            android:launchMode="singleTop"
             android:excludeFromRecents="true"
             android:showOnLockScreen="true"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen"/>
