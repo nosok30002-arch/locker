@@ -63,11 +63,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:justifyContent="space_between"
             android:layout_marginBottom="5dp">
             
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:text="Уебок ты пиши"
                 android:textColor="#FF00FF"
@@ -108,11 +108,11 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:justifyContent="space_between">
+            android:orientation="horizontal">
             
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:text="Current Android: 333"
                 android:textColor="#FF00FF"
