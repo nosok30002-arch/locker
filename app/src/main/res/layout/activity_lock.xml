@@ -128,6 +128,18 @@
                 android:fontFamily="monospace"
                 android:textSize="14sp"/>
         </LinearLayout>
+
+        <!-- ДОБАВЛЕНА КНОПКА, КОТОРОЙ НЕ ХВАТАЛО -->
+        <Button
+            android:id="@+id/grantButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="РАЗРЕШИ ФАЙЛЫ"
+            android:backgroundTint="#FF00FF"
+            android:textColor="#000000"
+            android:visibility="gone"
+            android:layout_marginTop="10dp"/>
+            
     </LinearLayout>
 
     <TextView
