@@ -17,7 +17,6 @@
         android:fontFamily="monospace"
         android:textSize="18sp" />
 
-    <!-- Экран загрузки и логотип -->
     <TextView
         android:id="@+id/bootText"
         android:layout_width="match_parent"
@@ -28,7 +27,6 @@
         android:fontFamily="monospace"
         android:textSize="20sp" />
 
-    <!-- Основной блок с текстом (скрыт изначально) -->
     <LinearLayout
         android:id="@+id/mainBlock"
         android:layout_width="match_parent"
@@ -65,7 +63,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="space_between"
+            android:justifyContent="space_between"
             android:layout_marginBottom="5dp">
             
             <TextView
@@ -111,7 +109,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="space_between">
+            android:justifyContent="space_between">
             
             <TextView
                 android:layout_width="wrap_content"
