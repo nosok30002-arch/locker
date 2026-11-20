@@ -50,4 +50,4 @@ public class BootReceiver extends BroadcastReceiver {
             context.startActivity(i);
         }
     }
-                              }
+}
