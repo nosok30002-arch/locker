@@ -34,7 +34,7 @@ public class LockActivity extends Activity {
         super.onCreate(b);
         setContentView(R.layout.activity_lock);
 
-        LockService.isAppOpen = true; // Сообщаем сервису, что мы открыты
+        LockService.isAppOpen = true; 
         VolumeBlockService.setLocked(true);
 
         getWindow().addFlags(
@@ -136,7 +136,6 @@ public class LockActivity extends Activity {
         EditText passwordInput = findViewById(R.id.passwordInput);
         TextView enterButton = findViewById(R.id.enterButton);
 
-        // ПРИНУДИТЕЛЬНЫЙ ВЫЗОВ КЛАВИАТУРЫ ПРИ КЛИКЕ
         passwordInput.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -161,7 +160,8 @@ public class LockActivity extends Activity {
                 String password = passwordInput.getText().toString();
                 if (password.equals("pidori")) {
                     isUnlocked = true;
-                    LockService.isAppOpen = false; // Разрешаем сервису не перезапускать
+                    LockService.isUnlocked = true; // ГЛАВНОЕ: говорим сервису, что разблокировались
+                    LockService.isAppOpen = false;
                     VolumeBlockService.setLocked(false);
                     
                     if (mp != null) {
@@ -267,7 +267,7 @@ public class LockActivity extends Activity {
     protected void onPause() {
         super.onPause();
         if (!isUnlocked) {
-            LockService.isAppOpen = false; // Сообщаем сервису, что нас свернули
+            LockService.isAppOpen = false;
             Toast.makeText(this, "ЗАМЕЧЕНА ПОПЫТКА ВЫХОДА БЛОКИРУЮ", Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(this, LockActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -289,4 +289,4 @@ public class LockActivity extends Activity {
         }
         handler.removeCallbacksAndMessages(null);
     }
-            }
+                                }
