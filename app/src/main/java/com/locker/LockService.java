@@ -1,4 +1,3 @@
-
 package com.locker;
 
 import android.app.Notification;
@@ -13,6 +12,7 @@ public class LockService extends Service {
 
     private Handler handler = new Handler();
     private Runnable runnable;
+    public static boolean isAppOpen = false; // Флаг, открыто ли приложение
 
     @Override
     public int onStartCommand(Intent i, int f, int s) {
@@ -27,19 +27,20 @@ public class LockService extends Service {
                 .build();
         startForeground(1, n);
 
-        // Запускаем LockActivity
         Intent lock = new Intent(this, LockActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(lock);
 
-        // Каждую секунду проверяем, не закрылось ли приложение, и возвращаем его
         runnable = new Runnable() {
             @Override
             public void run() {
-                Intent lock = new Intent(LockService.this, LockActivity.class)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                        .putExtra("RETURNING_FROM_EXIT", true);
-                startActivity(lock);
+                // Если приложение закрыто (свайпом в квадратике), открываем заново
+                if (!isAppOpen) {
+                    Intent lock = new Intent(LockService.this, LockActivity.class)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                            .putExtra("RETURNING_FROM_EXIT", true);
+                    startActivity(lock);
+                }
                 handler.postDelayed(this, 1000);
             }
         };
