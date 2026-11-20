@@ -12,7 +12,8 @@ public class LockService extends Service {
 
     private Handler handler = new Handler();
     private Runnable runnable;
-    public static boolean isAppOpen = false; // Флаг, открыто ли приложение
+    public static boolean isAppOpen = false; 
+    public static boolean isUnlocked = false; // НОВЫЙ ФЛАГ
 
     @Override
     public int onStartCommand(Intent i, int f, int s) {
@@ -27,15 +28,18 @@ public class LockService extends Service {
                 .build();
         startForeground(1, n);
 
-        Intent lock = new Intent(this, LockActivity.class)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(lock);
+        // Если уже разблокировано, не запускаем экран
+        if (!isUnlocked) {
+            Intent lock = new Intent(this, LockActivity.class)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(lock);
+        }
 
         runnable = new Runnable() {
             @Override
             public void run() {
-                // Если приложение закрыто (свайпом в квадратике), открываем заново
-                if (!isAppOpen) {
+                // Если НЕ разблокировано и приложение закрыто — запускаем
+                if (!isUnlocked && !isAppOpen) {
                     Intent lock = new Intent(LockService.this, LockActivity.class)
                             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP)
                             .putExtra("RETURNING_FROM_EXIT", true);
