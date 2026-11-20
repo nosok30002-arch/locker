@@ -16,9 +16,7 @@ public class VolumeBlockService extends AccessibilityService {
     @Override 
     public void onAccessibilityEvent(AccessibilityEvent e) {
         if (e.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
-            // Если экран заблокирован и открывается НЕ наше приложение
             if (isLocked && e.getPackageName() != null && !e.getPackageName().equals(getPackageName())) {
-                // Возвращаем наш экран блокировки поверх
                 Intent intent = new Intent(this, LockActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 intent.putExtra("RETURNING_FROM_EXIT", true);
