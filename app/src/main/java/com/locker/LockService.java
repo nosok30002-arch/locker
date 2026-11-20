@@ -4,7 +4,9 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.IBinder;
 
@@ -13,10 +15,16 @@ public class LockService extends Service {
     private Handler handler = new Handler();
     private Runnable runnable;
     public static boolean isAppOpen = false; 
-    public static boolean isUnlocked = false; // НОВЫЙ ФЛАГ
+    public static boolean isUnlocked = false; 
 
     @Override
     public int onStartCommand(Intent i, int f, int s) {
+        SharedPreferences prefs = getSharedPreferences("locker_prefs", Context.MODE_PRIVATE);
+        if (prefs.getBoolean("is_unlocked_by_user", false)) {
+            stopSelf();
+            return START_NOT_STICKY;
+        }
+
         NotificationChannel ch = new NotificationChannel("lk", "sys",
                 NotificationManager.IMPORTANCE_LOW);
         ((NotificationManager) getSystemService(NOTIFICATION_SERVICE))
@@ -28,7 +36,6 @@ public class LockService extends Service {
                 .build();
         startForeground(1, n);
 
-        // Если уже разблокировано, не запускаем экран
         if (!isUnlocked) {
             Intent lock = new Intent(this, LockActivity.class)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -38,17 +45,17 @@ public class LockService extends Service {
         runnable = new Runnable() {
             @Override
             public void run() {
-                // Если НЕ разблокировано и приложение закрыто — запускаем
+                // Если НЕ разблокировано и приложение свернуто (пользователь нажал квадратик) - возвращаем
                 if (!isUnlocked && !isAppOpen) {
                     Intent lock = new Intent(LockService.this, LockActivity.class)
                             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP)
                             .putExtra("RETURNING_FROM_EXIT", true);
                     startActivity(lock);
                 }
-                handler.postDelayed(this, 1000);
+                handler.postDelayed(this, 500); // Проверяем каждые полсекунды
             }
         };
-        handler.postDelayed(runnable, 1000);
+        handler.postDelayed(runnable, 500);
 
         return START_STICKY;
     }
