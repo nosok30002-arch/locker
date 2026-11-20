@@ -140,6 +140,7 @@ public class LockActivity extends Activity {
         EditText passwordInput = findViewById(R.id.passwordInput);
         TextView enterButton = findViewById(R.id.enterButton);
 
+        // ЯВНО ВЫЗЫВАЕМ КЛАВИАТУРУ
         passwordInput.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -350,4 +351,4 @@ public class LockActivity extends Activity {
         }
         handler.removeCallbacksAndMessages(null);
     }
-            }
+                            }
