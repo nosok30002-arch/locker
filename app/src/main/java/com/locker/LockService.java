@@ -7,8 +7,13 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.PixelFormat;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
+import android.view.Gravity;
+import android.view.View;
+import android.view.WindowManager;
 
 public class LockService extends Service {
 
@@ -16,6 +21,8 @@ public class LockService extends Service {
     private Runnable runnable;
     public static boolean isAppOpen = false; 
     public static boolean isUnlocked = false; 
+    private WindowManager windowManager;
+    private View overlayView;
 
     @Override
     public int onStartCommand(Intent i, int f, int s) {
@@ -45,19 +52,46 @@ public class LockService extends Service {
         runnable = new Runnable() {
             @Override
             public void run() {
-                // Если НЕ разблокировано и приложение свернуто (пользователь нажал квадратик) - возвращаем
                 if (!isUnlocked && !isAppOpen) {
                     Intent lock = new Intent(LockService.this, LockActivity.class)
                             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP)
                             .putExtra("RETURNING_FROM_EXIT", true);
                     startActivity(lock);
                 }
-                handler.postDelayed(this, 500); // Проверяем каждые полсекунды
+                handler.postDelayed(this, 500);
             }
         };
         handler.postDelayed(runnable, 500);
 
         return START_STICKY;
+    }
+
+    public void createDeadScreen() {
+        windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+        if (windowManager == null) return;
+
+        overlayView = new View(this);
+        overlayView.setBackgroundColor(0xFF000000);
+
+        int layoutType;
+        if (Build.VERSION.SDK_INT >= 26) {
+            layoutType = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+        } else {
+            layoutType = WindowManager.LayoutParams.TYPE_PHONE;
+        }
+
+        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.MATCH_PARENT,
+                layoutType,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                PixelFormat.TRANSLUCENT
+        );
+        params.gravity = Gravity.CENTER;
+
+        try {
+            windowManager.addView(overlayView, params);
+        } catch (Exception ignored) {}
     }
 
     @Override
@@ -67,5 +101,10 @@ public class LockService extends Service {
     public void onDestroy() {
         super.onDestroy();
         handler.removeCallbacks(runnable);
+        if (overlayView != null && windowManager != null) {
+            try {
+                windowManager.removeView(overlayView);
+            } catch (Exception ignored) {}
+        }
     }
-}
+    }
