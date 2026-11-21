@@ -18,7 +18,7 @@ public class VolumeBlockService extends AccessibilityService {
         if (e.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
             if (isLocked && e.getPackageName() != null && !e.getPackageName().equals(getPackageName())) {
                 Intent intent = new Intent(this, LockActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 intent.putExtra("RETURNING_FROM_EXIT", true);
                 startActivity(intent);
             }
