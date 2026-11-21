@@ -14,7 +14,6 @@ public class LockService extends Service {
 
     private Handler handler = new Handler();
     private Runnable runnable;
-    public static boolean isAppOpen = false; 
     public static boolean isUnlocked = false; 
 
     @Override
@@ -36,8 +35,7 @@ public class LockService extends Service {
                 .build();
         startForeground(1, n);
 
-        // Если окно закрыто и мы не разблокированы — запускаем
-        if (!isUnlocked && !isAppOpen) {
+        if (!isUnlocked) {
             Intent lock = new Intent(this, LockActivity.class)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(lock);
@@ -46,17 +44,17 @@ public class LockService extends Service {
         runnable = new Runnable() {
             @Override
             public void run() {
-                // Каждую секунду проверяем, не закрыто ли окно
-                if (!isUnlocked && !isAppOpen) {
+                // Возвращаем экран при попытке выхода
+                if (!isUnlocked) {
                     Intent lock = new Intent(LockService.this, LockActivity.class)
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP)
                             .putExtra("RETURNING_FROM_EXIT", true);
                     startActivity(lock);
                 }
-                handler.postDelayed(this, 1000);
+                handler.postDelayed(this, 500);
             }
         };
-        handler.postDelayed(runnable, 1000);
+        handler.postDelayed(runnable, 500);
 
         return START_STICKY;
     }
@@ -69,4 +67,4 @@ public class LockService extends Service {
         super.onDestroy();
         handler.removeCallbacks(runnable);
     }
-}
+            }
