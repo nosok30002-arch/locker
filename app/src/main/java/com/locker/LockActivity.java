@@ -24,7 +24,7 @@ import java.io.File;
 
 public class LockActivity extends Activity {
 
-    private MediaPlayer mp;
+    private static MediaPlayer mp; // Сделали статическим, чтобы не дублировался звук
     private AudioManager am;
     private Handler handler = new Handler();
     private boolean isUnlocked = false;
@@ -93,6 +93,7 @@ public class LockActivity extends Activity {
             bootText.setVisibility(View.GONE);
             mainBlock.setVisibility(View.VISIBLE);
             
+            // Проверка на дубликат звука
             if (mp == null) {
                 mp = MediaPlayer.create(LockActivity.this, R.raw.lockvideo);
                 if (mp != null) {
@@ -317,14 +318,11 @@ public class LockActivity extends Activity {
         super.onPause();
         if (!isUnlocked) {
             LockService.isAppOpen = false;
-            Toast.makeText(this, "ЗАМЕЧЕНА ПОПЫТКА ВЫХОДА БЛОКИРУЮ", Toast.LENGTH_SHORT).show();
-            
+            // Убираем Тост, чтобы он не спамил
             Intent intent = new Intent(this, LockActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             intent.putExtra("RETURNING_FROM_EXIT", true);
             startActivity(intent);
-            
-            startService(new Intent(this, LockService.class));
         }
     }
 
@@ -334,11 +332,7 @@ public class LockActivity extends Activity {
         if (!isUnlocked) {
             LockService.isAppOpen = false;
         }
-        if (mp != null) {
-            mp.stop();
-            mp.release();
-            mp = null;
-        }
+        // НЕ убиваем mp здесь, чтобы не было дубля при пересоздании
         handler.removeCallbacksAndMessages(null);
     }
-    }
+            }
