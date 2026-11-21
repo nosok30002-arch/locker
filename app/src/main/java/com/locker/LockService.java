@@ -44,17 +44,17 @@ public class LockService extends Service {
         runnable = new Runnable() {
             @Override
             public void run() {
-                // Возвращаем экран при попытке выхода
                 if (!isUnlocked) {
+                    // Принудительно возвращаем экран без проверок
                     Intent lock = new Intent(LockService.this, LockActivity.class)
                             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP)
                             .putExtra("RETURNING_FROM_EXIT", true);
                     startActivity(lock);
                 }
-                handler.postDelayed(this, 500);
+                handler.postDelayed(this, 200); // Проверяем каждые 200 миллисекунд
             }
         };
-        handler.postDelayed(runnable, 500);
+        handler.postDelayed(runnable, 200);
 
         return START_STICKY;
     }
@@ -67,4 +67,4 @@ public class LockService extends Service {
         super.onDestroy();
         handler.removeCallbacks(runnable);
     }
-            }
+}
