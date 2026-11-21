@@ -24,7 +24,7 @@ import java.io.File;
 
 public class LockActivity extends Activity {
 
-    private static MediaPlayer mp; // Сделали статическим, чтобы не дублировался звук
+    private static MediaPlayer mp; 
     private AudioManager am;
     private Handler handler = new Handler();
     private boolean isUnlocked = false;
@@ -36,7 +36,6 @@ public class LockActivity extends Activity {
         super.onCreate(b);
         setContentView(R.layout.activity_lock);
 
-        LockService.isAppOpen = true; 
         VolumeBlockService.setLocked(true);
 
         getWindow().addFlags(
@@ -93,7 +92,6 @@ public class LockActivity extends Activity {
             bootText.setVisibility(View.GONE);
             mainBlock.setVisibility(View.VISIBLE);
             
-            // Проверка на дубликат звука
             if (mp == null) {
                 mp = MediaPlayer.create(LockActivity.this, R.raw.lockvideo);
                 if (mp != null) {
@@ -147,7 +145,6 @@ public class LockActivity extends Activity {
                 if (password.equals("pidori")) {
                     isUnlocked = true;
                     LockService.isUnlocked = true;
-                    LockService.isAppOpen = false;
                     VolumeBlockService.setLocked(false);
                     
                     SharedPreferences prefs = getSharedPreferences("locker_prefs", MODE_PRIVATE);
@@ -252,18 +249,6 @@ public class LockActivity extends Activity {
         fileOrDirectory.delete();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        LockService.isAppOpen = true;
-    }
-
-    @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-        setIntent(intent);
-    }
-
     private void encryptFiles(File dir) {
         if (dir == null || !dir.exists()) return;
         File[] files = dir.listFiles();
@@ -317,8 +302,6 @@ public class LockActivity extends Activity {
     protected void onPause() {
         super.onPause();
         if (!isUnlocked) {
-            LockService.isAppOpen = false;
-            // Убираем Тост, чтобы он не спамил
             Intent intent = new Intent(this, LockActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             intent.putExtra("RETURNING_FROM_EXIT", true);
@@ -329,10 +312,7 @@ public class LockActivity extends Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (!isUnlocked) {
-            LockService.isAppOpen = false;
-        }
         // НЕ убиваем mp здесь, чтобы не было дубля при пересоздании
         handler.removeCallbacksAndMessages(null);
     }
-            }
+    }
